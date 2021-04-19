@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +29,8 @@ public class UserSevice implements UserDetailsService {
         return userRepo.findByUsername(username);
 
     }
+    @Autowired
+   private PasswordEncoder passwordEncoder;
 
     public boolean addUser(User user) {
         User userFromDb = userRepo.findByUsername(user.getUsername());
@@ -38,6 +41,7 @@ public class UserSevice implements UserDetailsService {
         user.setActive(true);
         user.setRoles(Collections.singleton(Role.USER));
         user.setActivationCode(UUID.randomUUID().toString());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepo.save(user);
 
         sendMessage(user);
@@ -101,8 +105,8 @@ public class UserSevice implements UserDetailsService {
                 user.setActivationCode(UUID.randomUUID().toString());
             }
         }
-        if (StringUtils.isEmpty(password)) {
-            user.setPassword(password);
+        if (!StringUtils.isEmpty(password)) {
+            user.setPassword(passwordEncoder.encode(password));
         }
         userRepo.save(user);
         if(isEmailChanged) {
